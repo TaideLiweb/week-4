@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
+      integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
+      crossorigin="anonymous"
+    />
+    <title>Document</title>
+    <style>
+      html,
+      body {
+        height: 100vh;
+        text-align: center;
+      }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div class="container">
+        <form class="form-signin" @submit.prevent="login">
+          <!--@submit.prevent 阻止表單送出事件-->
+          <h1 class="h3 mb-3 font-weight-normal">
+            請先登入
+          </h1>
+          <div class="form-group">
+            <label for="inputEmail" class="sr-only">Email address</label>
+            <input
+              id="inputEmail"
+              v-model="user.email"
+              type="email"
+              class="form-control"
+              placeholder="Email address"
+              required
+              autofocus
+            />
+            <!--autofocus頁面開啟自動聚焦-->
+          </div>
+          <div class="form-group">
+            <label for="inputPassword" class="sr-only">Password</label>
+            <input
+              id="inputPassword"
+              v-model="user.password"
+              type="password"
+              class="form-control"
+              placeholder="Password"
+              required
+            />
+            <!--type="password"可以讓input欄位遮蓋字串-->
+          </div>
+          <button class="btn btn-lg btn-primary btn-block" type="submit" @click="login">
+            登入
+          </button>
+          <br />
+          <button class="btn btn-outline-primary btn-block" type="button" @click="logout">
+            登出
+          </button>
+          <br />
+          <button class="btn btn-outline-primary btn-block" type="button" @click="getData">
+            取得資料
+          </button>
+        </form>
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script>
+      const apiPath = `https://course-ec-api.hexschool.io/api/`
+      const uuid = `4e5317b1-b943-407e-81cc-73ea10b6482c`
+      new Vue({
+        el: '#app',
+        data() {
+          return {
+            user: {
+              email: '',
+              password: '',
+            },
+            token: '',
+          }
+        },
+        methods: {
+          login() {
+            const api = `${apiPath}auth/login`
+            axios
+              .post(api, this.user)
+              .then((res) => {
+                const token = res.data.token
+                const expired = res.data.expired
+                document.cookie = `loginVerify=${token}; expires=${new Date(
+                  expired * 1000
+                )} GMT; path=/`
+                window.location = 'backstagePage.html'
+              })
+              .catch((err) => {
+                console.log(`error`, err)
+              })
+          },
+          logout() {
+            document.cookie = `loginVerify=; expires= GMT; path=/`
+          },
+          getData() {
+            this.token = document.cookie.replace(
+              /(?:(?:^|.*;\s*)loginVerify\s*\=\s*([^;]*).*$)|^.*$/,
+              '$1'
+            )
+            const api = `${apiPath}${uuid}/admin/ec/products`
+            axios.defaults.headers.common.Authorization = `Bearer ${this.token}`
+            axios
+              .get(api)
+              .then((res) => {
+                console.log(res)
+              })
+              .catch((err) => {
+                console.log(err)
+              })
+          },
+        },
+      })
+    </script>
+  </body>
+</html>
