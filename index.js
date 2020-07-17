@@ -5,15 +5,26 @@ var app = new Vue({
   el: '#app',
   data: {
     products: [],
+    template: { imageUrl: [] },
   },
-  template: { imageUrl: [] },
   created() {
-    const api = `${apiPath}${uuid}/admin/ec/products`
-    axios.get(api).then((res) => {
-      console.log(res)
-    })
+    this.getData()
   },
   methods: {
+    getData() {
+      token = document.cookie.replace(/(?:(?:^|.*;\s*)loginVerify\s*\=\s*([^;]*).*$)|^.*$/, '$1')
+      axios.defaults.headers.common.Authorization = `Bearer ${token}`
+      const api = `${apiPath}${uuid}/admin/ec/products`
+      axios
+        .get(api)
+        .then((res) => {
+          this.products = res.data.data
+          console.log(this.products)
+        })
+        .catch((err) => {
+          console.log('err', err)
+        })
+    },
     openModal() {
       this.template = { imageUrl: [] }
       $('#modal').modal('show')
@@ -33,11 +44,19 @@ var app = new Vue({
           key = index
         }
       })
-      this.products.splice(key, 1)
+      const api = ` ${apiPath}${uuid}/admin/ec/product/${this.products[key].id}`
+      token = document.cookie.replace(/(?:(?:^|.*;\s*)loginVerify\s*\=\s*([^;]*).*$)|^.*$/, '$1')
+      axios.defaults.headers.common.Authorization = `Bearer ${token}`
+      axios.delete(api).then((res) => {
+        this.getData()
+        console.log(res)
+      })
       $('#deleteModal').modal('hide')
     },
 
     updateData() {
+      token = document.cookie.replace(/(?:(?:^|.*;\s*)loginVerify\s*\=\s*([^;]*).*$)|^.*$/, '$1')
+      axios.defaults.headers.common.Authorization = `Bearer ${token}`
       if (this.template.id) {
         let key
         this.products.forEach((item, index) => {
@@ -45,7 +64,8 @@ var app = new Vue({
             key = index
           }
         })
-        this.products.splice(key, this.template)
+        const api = `${apiPath}${uuid}/admin/ec/product/${this.products[key].id}`
+        axios.patch(api, this.template)
         this.$set(this.products, key, this.template)
         $('#modal').modal('hide')
         this.template = { imageUrl: [] }
@@ -55,12 +75,12 @@ var app = new Vue({
         this.template.enabled = false
         this.template.id = time
         const api = `${apiPath}${uuid}/admin/ec/product`
-        token = document.cookie.replace(/(?:(?:^|.*;\s*)loginVerify\s*\=\s*([^;]*).*$)|^.*$/, '$1')
-        axios.defaults.headers.common.Authorization = `Bearer ${token}`
         axios.post(api, this.template).then((res) => {
           console.log(res)
+          this.getData()
         })
-        this.products.push(this.template)
+        // this.products.push(this.template)
+
         $('#modal').modal('hide')
         this.template = { imageUrl: [] }
       }
